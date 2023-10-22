@@ -27,9 +27,8 @@ export class UsersController {
     return this.userService.createUser(userDto);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Get("search/:username")
-  async findUsers(@Param("username") username: string) {
+  async findUsersByName(@Param("username") username: string) {
     return this.userService.findUsersByName(username);
   }
 
