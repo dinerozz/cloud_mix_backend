@@ -4,11 +4,7 @@ import { UsersModule } from "./users/users.module";
 import { ConfigModule } from "@nestjs/config";
 import { User } from "./users/users.model";
 import { AuthModule } from "./auth/auth.module";
-import { ChatBotModule } from "./chat-bot/chat-bot.module";
-import { MessagesModule } from "./messages/messages.module";
-import { ChatsModule } from "./chats/chats.module";
-import { UserChat } from "./chats/models/user-chats.model";
-import { Chat } from "./chats/models/chats.model";
+import { ChatModule } from './chat/chat.module';
 
 @Module({
   controllers: [],
@@ -24,14 +20,12 @@ import { Chat } from "./chats/models/chats.model";
       username: process.env.POSTGRES_USER,
       password: process.env.POSTGRES_PASSWORD,
       database: process.env.POSTGRES_DB,
-      models: [User, Chat, UserChat],
+      models: [User],
       autoLoadModels: true,
     }),
     UsersModule,
     AuthModule,
-    ChatBotModule,
-    MessagesModule,
-    ChatsModule,
+    ChatModule,
   ],
 })
 export class AppModule {}
