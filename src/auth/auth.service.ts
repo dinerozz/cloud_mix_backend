@@ -3,28 +3,31 @@ import {
   HttpStatus,
   Injectable,
   UnauthorizedException,
-} from '@nestjs/common';
-import { CreateUserDto } from '../users/dto/create-user.dto';
-import { UsersService } from '../users/users.service';
-import { JwtService } from '@nestjs/jwt';
-import * as bcrypt from 'bcryptjs';
-import { User } from '../users/users.model';
-import { v4 as uuid } from 'uuid';
-import { Response } from 'express';
+} from "@nestjs/common";
+import { CreateUserDto } from "../users/dto/create-user.dto";
+import { UsersService } from "../users/users.service";
+import { JwtService } from "@nestjs/jwt";
+import * as bcrypt from "bcryptjs";
+import { User } from "../users/users.model";
+import { v4 as uuid } from "uuid";
+import { Response } from "express";
+import { InjectModel } from "@nestjs/sequelize";
 
 @Injectable()
 export class AuthService {
   constructor(
     private userService: UsersService,
-    private jwtService: JwtService,
+    @InjectModel(User)
+    private userModel: User,
+    private jwtService: JwtService
   ) {}
 
   async login(userDto: CreateUserDto, response: Response) {
     const user = await this.validateUser(userDto);
     const tokens = await this.generateTokens(user);
-    response.cookie('jwt', tokens.accessToken, {
+    response.cookie("jwt", tokens.accessToken, {
       httpOnly: true,
-      domain: 'http://localhost:5173',
+      domain: "http://localhost:5173",
     });
     return tokens;
   }
@@ -33,13 +36,16 @@ export class AuthService {
     const candidate = await this.userService.getUserByEmail(userDto.username);
 
     if (userDto.username.length === 0 || userDto.password.length === 0) {
-      throw new HttpException('Email or password should not be empty', HttpStatus.BAD_REQUEST)
+      throw new HttpException(
+        "Email or password should not be empty",
+        HttpStatus.BAD_REQUEST
+      );
     }
 
     if (candidate) {
       throw new HttpException(
-        'User with given email address already exists',
-        HttpStatus.BAD_REQUEST,
+        "User with given email address already exists",
+        HttpStatus.BAD_REQUEST
       );
     }
     const hashedPassword = await bcrypt.hash(userDto.password, 5);
@@ -49,16 +55,37 @@ export class AuthService {
     });
 
     const tokens = await this.generateTokens(user);
-    response.cookie('jwt', tokens.accessToken, {
+    response.cookie("jwt", tokens.accessToken, {
       httpOnly: true,
-      domain: 'http://localhost:5173',
+      domain: "http://localhost:5173",
     });
     return tokens;
   }
 
-  // TODO: Implement logout feature
-  async logout() {
-    return undefined;
+  async refreshToken(refresh: string) {
+    try {
+      const { jti, sub } = this.jwtService.verify(refresh);
+
+      const user = await this.userService.getUserById(sub);
+
+      if (user && user.refreshToken === refresh) {
+        const newTokens = await this.generateTokens(user);
+
+        user.refreshToken = newTokens.refreshToken;
+        await user.save();
+
+        return newTokens;
+      }
+    } catch (e) {
+      throw new UnauthorizedException("Invalid refresh token");
+    }
+  }
+
+  async logout(userId: string): Promise<void> {
+    await this.userModel.update(
+      { refreshToken: null },
+      { where: { id: userId } }
+    );
   }
 
   // TODO: Store refresh token in httpOnly cookies
@@ -67,12 +94,12 @@ export class AuthService {
       username: user.username,
       id: user.id,
     };
-    const refreshTokenPayload = { sub: user.id, jti: uuid() }; // generate a unique jti for the refresh token
+    const refreshTokenPayload = { sub: user.id, jti: uuid() };
     const accessToken = this.jwtService.sign(accessTokenPayload, {
-      expiresIn: '15m',
+      expiresIn: "1m",
     });
     const refreshToken = this.jwtService.sign(refreshTokenPayload, {
-      expiresIn: '7d',
+      expiresIn: "7d",
     });
     user.refreshToken = refreshToken;
     await user.save();
@@ -83,13 +110,13 @@ export class AuthService {
     const user = await this.userService.getUserByEmail(userDto.username);
     const passwordsEqual = await bcrypt.compare(
       userDto.password,
-      user.password,
+      user.password
     );
     if (user && passwordsEqual) {
       return user;
     }
     throw new UnauthorizedException({
-      message: 'Invalid credentials, check your email or password',
+      message: "Invalid credentials, check your email or password",
     });
   }
 }

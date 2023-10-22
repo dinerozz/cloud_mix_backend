@@ -42,6 +42,7 @@ export class UsersController {
 
   @ApiOperation({ summary: "Get current user" })
   @ApiResponse({ status: 200, type: [User] })
+  @UseGuards(JwtAuthGuard)
   @Get("/current")
   getCurrentUser(@Headers() headers) {
     return this.userService.getCurrentUser(headers);
