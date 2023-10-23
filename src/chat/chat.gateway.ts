@@ -34,11 +34,7 @@ export class ChatGateway implements OnGatewayConnection {
     @ConnectedSocket() client: Socket,
     @MessageBody() data: { chatId: string; userId: string; text: string }
   ) {
-    const message = await this.chatService.sendMessage(
-      data.chatId,
-      data.userId,
-      data.text
-    );
+    const message = await this.chatService.sendMessage(data);
     this.server.to(data.chatId).emit("newMessage", message);
   }
 }

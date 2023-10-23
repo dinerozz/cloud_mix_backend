@@ -57,9 +57,7 @@ export class ChatService {
       updatedAt: chat.updatedAt,
       createdAt: chat.createdAt,
       otherUserName:
-        chat.user1 && chat.user1.id !== userId
-          ? chat.user1.username
-          : chat.user2.username,
+        chat.userId1 !== userId ? chat.user1.username : chat.user2.username,
     }));
   }
 
@@ -71,11 +69,11 @@ export class ChatService {
     return this.messageModel.findAll({ where: { chatId } });
   }
 
-  async sendMessage(
-    chatId: string,
-    userId: string,
-    text: string
-  ): Promise<Message> {
-    return this.messageModel.create({ chatId, userId, text });
+  async sendMessage(data: {
+    chatId: string;
+    userId: string;
+    text: string;
+  }): Promise<Message> {
+    return this.messageModel.create(data);
   }
 }

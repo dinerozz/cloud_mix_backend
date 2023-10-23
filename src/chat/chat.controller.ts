@@ -37,16 +37,16 @@ export class ChatController {
     return this.chatService.getChatById(chatId);
   }
 
-  @UseGuards(JwtAuthGuard)
-  @Post("/chat/:id/message")
-  async sendMessage(
-    @Param("id") chatId: string,
-    @Body() sendMessageDto: SendMessageDto
-  ) {
-    return this.chatService.sendMessage(
-      chatId,
-      sendMessageDto.userId,
-      sendMessageDto.text
-    );
-  }
+  // @UseGuards(JwtAuthGuard)
+  // @Post("/chat/:id/message")
+  // async sendMessage(
+  //   @Param("id") chatId: string,
+  //   @Body() sendMessageDto: SendMessageDto
+  // ) {
+  //   return this.chatService.sendMessage(
+  //     chatId,
+  //     sendMessageDto.userId,
+  //     sendMessageDto.text
+  //   );
+  // }
 }
