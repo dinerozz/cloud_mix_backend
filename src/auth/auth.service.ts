@@ -112,7 +112,7 @@ export class AuthService {
     };
     const refreshTokenPayload = { sub: user.id, jti: uuid() };
     const accessToken = this.jwtService.sign(accessTokenPayload, {
-      expiresIn: "3m",
+      expiresIn: "30m",
     });
     const refreshToken = this.jwtService.sign(refreshTokenPayload, {
       expiresIn: "7d",
