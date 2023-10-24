@@ -27,6 +27,8 @@ export class ChatGateway implements OnGatewayConnection {
   ) {
     client.join(data.chatId);
     console.log(`Client ${client.id} joined chat ${data.chatId}`);
+    const chatHistory = await this.chatService.getChatHistory(data.chatId);
+    client.emit("chatHistory", chatHistory);
   }
 
   @SubscribeMessage("sendMessage")

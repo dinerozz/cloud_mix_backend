@@ -4,6 +4,7 @@ import { Injectable } from "@nestjs/common";
 import { CreateUserDto } from "./dto/create-user.dto";
 import { JwtService } from "@nestjs/jwt";
 import { Op } from "sequelize";
+import { Request } from "express";
 
 @Injectable()
 export class UsersService {
@@ -33,8 +34,8 @@ export class UsersService {
     return user;
   }
 
-  async getCurrentUser(headers: Headers) {
-    const token = headers["authorization"].split(" ")[1];
+  async getCurrentUser(req: Request) {
+    const token = req.cookies["jwt"];
     const user = this.jwtService.decode(token);
     return this.userRepository.findOne({
       where: { id: user["id"] },

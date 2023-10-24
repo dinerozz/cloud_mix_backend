@@ -4,9 +4,11 @@ import {
   Get,
   Param,
   Post,
+  Req,
   UseGuards,
   UsePipes,
 } from "@nestjs/common";
+import { Request } from "express";
 import { UsersService } from "./users.service";
 import { CreateUserDto } from "./dto/create-user.dto";
 import { ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
@@ -44,8 +46,8 @@ export class UsersController {
   @ApiResponse({ status: 200, type: [User] })
   @UseGuards(JwtAuthGuard)
   @Get("/current")
-  getCurrentUser(@Headers() headers) {
-    return this.userService.getCurrentUser(headers);
+  getCurrentUser(@Req() req: Request) {
+    return this.userService.getCurrentUser(req);
   }
 
   @ApiOperation({ summary: "Get all users" })

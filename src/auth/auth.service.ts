@@ -12,6 +12,7 @@ import { User } from "../users/users.model";
 import { v4 as uuid } from "uuid";
 import { Response } from "express";
 import { InjectModel } from "@nestjs/sequelize";
+import { Request } from "express";
 
 @Injectable()
 export class AuthService {
@@ -27,7 +28,7 @@ export class AuthService {
     const tokens = await this.generateTokens(user);
     response.cookie("jwt", tokens.accessToken, {
       httpOnly: true,
-      domain: "http://localhost:5173",
+      domain: "localhost",
     });
     return tokens;
   }
@@ -57,30 +58,45 @@ export class AuthService {
     const tokens = await this.generateTokens(user);
     response.cookie("jwt", tokens.accessToken, {
       httpOnly: true,
-      domain: "http://localhost:5173",
+      domain: "localhost",
     });
     return tokens;
   }
 
-  async refreshToken(refresh: string) {
-    try {
-      const { jti, sub } = this.jwtService.verify(refresh);
+  async refreshToken(req: Request, res: Response) {
+    const token = req.cookies["jwt"];
 
-      const user = await this.userService.getUserById(sub);
+    const currentUser = this.jwtService.decode(token) as {
+      id: string;
+      username: string;
+      iat: string;
+      exp: string;
+    };
 
-      if (user && user.refreshToken === refresh) {
-        const newTokens = await this.generateTokens(user);
+    const userId = currentUser.id;
 
-        user.refreshToken = newTokens.refreshToken;
-        await user.save();
-
-        return newTokens;
-      }
-    } catch (e) {
-      throw new UnauthorizedException("Invalid refresh token");
+    if (!userId) {
+      throw new UnauthorizedException("No user id provided");
     }
-  }
 
+    const user = await this.userService.getUserById(userId);
+
+    if (!user) {
+      throw new UnauthorizedException("User not found");
+    }
+
+    const newTokens = await this.generateTokens(user);
+
+    user.refreshToken = newTokens.refreshToken;
+    await user.save();
+
+    res.cookie("jwt", newTokens.accessToken, {
+      httpOnly: true,
+      domain: "localhost",
+    });
+
+    return newTokens;
+  }
   async logout(userId: string): Promise<void> {
     await this.userModel.update(
       { refreshToken: null },
@@ -96,7 +112,7 @@ export class AuthService {
     };
     const refreshTokenPayload = { sub: user.id, jti: uuid() };
     const accessToken = this.jwtService.sign(accessTokenPayload, {
-      expiresIn: "30m",
+      expiresIn: "3m",
     });
     const refreshToken = this.jwtService.sign(refreshTokenPayload, {
       expiresIn: "7d",

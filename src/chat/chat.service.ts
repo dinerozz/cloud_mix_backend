@@ -65,6 +65,13 @@ export class ChatService {
     return this.chatModel.findByPk(chatId);
   }
 
+  async getChatHistory(chatId: string): Promise<Message[]> {
+    return this.messageModel.findAll({
+      where: { chatId },
+      order: [["createdAt", "ASC"]], // Это упорядочит сообщения по времени создания в возрастающем порядке
+    });
+  }
+
   async getMessages(chatId: string): Promise<Message[]> {
     return this.messageModel.findAll({ where: { chatId } });
   }
