@@ -1,9 +1,11 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, NotFoundException } from "@nestjs/common";
 import { InjectModel } from "@nestjs/sequelize";
 import { Chat } from "./models/chat.model";
 import { Message } from "./models/message.model";
 import { User } from "../users/users.model";
 import { Op } from "sequelize";
+import { Request } from "express";
+import { JwtService } from "@nestjs/jwt";
 
 export interface UserChat {
   id: string;
@@ -22,11 +24,44 @@ export class ChatService {
     @InjectModel(Message)
     private messageModel: typeof Message,
     @InjectModel(User)
-    private userModel: typeof User
+    private userModel: typeof User,
+    private jwtService: JwtService
   ) {}
 
   async createChat(userId1: string, userId2: string): Promise<Chat> {
     return this.chatModel.create({ userId1, userId2 });
+  }
+
+  async getChatParticipant(
+    chatId: string,
+    req: Request
+  ): Promise<{ id: string; username: string }> {
+    const token = req.cookies["jwt"];
+    const user = this.jwtService.decode(token);
+
+    const chat = await this.chatModel.findOne({
+      where: { id: chatId },
+      include: [
+        {
+          model: User,
+          as: "user1",
+          attributes: ["id", "username"],
+        },
+        {
+          model: User,
+          as: "user2",
+          attributes: ["id", "username"],
+        },
+      ],
+    });
+
+    if (!chat) {
+      throw new NotFoundException("Chat not found");
+    }
+
+    const otherUser = chat.userId1 !== user["id"] ? chat.user1 : chat.user2;
+
+    return { id: otherUser.id, username: otherUser.username };
   }
 
   async getUserChats(userId: string): Promise<UserChat[]> {

@@ -8,10 +8,9 @@ import {
   UseGuards,
 } from "@nestjs/common";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
-import { UsersService } from "../users/users.service";
 import { ChatService, UserChat } from "./chat.service";
-import { SendMessageDto } from "./dto/send-message.dto";
 import { CreateChatDto } from "./dto/create-chat.dto";
+import { Request } from "express";
 
 @Controller("chat")
 export class ChatController {
@@ -31,6 +30,15 @@ export class ChatController {
   async getUserChats(@Req() req): Promise<UserChat[]> {
     return await this.chatService.getUserChats(req.user.id);
   }
+
+  @Get(":chatId/participant")
+  async getChatParticipant(
+    @Param("chatId") chatId: string,
+    @Req() req: Request
+  ): Promise<{ id: string; username: string }> {
+    return this.chatService.getChatParticipant(chatId, req);
+  }
+
   @UseGuards(JwtAuthGuard)
   @Get("/chat/:id")
   async getChat(@Param("id") chatId: string) {

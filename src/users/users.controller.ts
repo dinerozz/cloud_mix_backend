@@ -14,7 +14,6 @@ import { CreateUserDto } from "./dto/create-user.dto";
 import { ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { User } from "./users.model";
 import { ValidationPipe } from "../pipes/validation.pipe";
-import { Headers } from "@nestjs/common";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 @ApiTags("Users")
 @Controller("users")
