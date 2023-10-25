@@ -13,6 +13,7 @@ import { v4 as uuid } from "uuid";
 import { Response } from "express";
 import { InjectModel } from "@nestjs/sequelize";
 import { Request } from "express";
+import { ChatService } from "../chat/chat.service";
 
 @Injectable()
 export class AuthService {

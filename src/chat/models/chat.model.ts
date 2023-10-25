@@ -2,12 +2,14 @@ import {
   BelongsTo,
   Column,
   ForeignKey,
+  HasMany,
   Model,
   Table,
 } from "sequelize-typescript";
 import { DataTypes } from "sequelize";
 import { User } from "../../users/users.model";
 import { ApiProperty } from "@nestjs/swagger";
+import { Message } from "./message.model";
 
 interface ChatCreationAttributes {
   userId1: string;
@@ -47,4 +49,7 @@ export class Chat extends Model<Chat, ChatCreationAttributes> {
 
   @BelongsTo(() => User, "userId2")
   user2: User;
+
+  @HasMany(() => Message, "chatId")
+  messages: Message[];
 }

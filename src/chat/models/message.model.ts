@@ -1,4 +1,5 @@
 import {
+  BelongsTo,
   Column,
   DataType,
   ForeignKey,
@@ -49,4 +50,10 @@ export class Message extends Model<Message, MessageCreationAttributes> {
     allowNull: false,
   })
   chatId: string;
+
+  @Column({ type: DataTypes.BOOLEAN, defaultValue: false })
+  checked: boolean;
+
+  @BelongsTo(() => Chat, "chatId")
+  chat: Chat;
 }

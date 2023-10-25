@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
 import { InjectModel } from "@nestjs/sequelize";
 import { Chat } from "./models/chat.model";
 import { Message } from "./models/message.model";
@@ -14,6 +18,8 @@ export interface UserChat {
   updatedAt: Date;
   createdAt: Date;
   otherUserName: string;
+  lastMessage: string;
+  unreadCount: number;
 }
 
 @Injectable()
@@ -29,6 +35,19 @@ export class ChatService {
   ) {}
 
   async createChat(userId1: string, userId2: string): Promise<Chat> {
+    const existingChat = await this.chatModel.findOne({
+      where: {
+        [Op.or]: [
+          { userId1: userId1, userId2: userId2 },
+          { userId1: userId2, userId2: userId1 },
+        ],
+      },
+    });
+
+    if (existingChat) {
+      throw new ConflictException("Chat already exists between these users");
+    }
+
     return this.chatModel.create({ userId1, userId2 });
   }
 
@@ -82,6 +101,12 @@ export class ChatService {
           attributes: ["username"],
           required: false,
         },
+        {
+          model: Message,
+          attributes: ["text", "createdAt", "checked"],
+          order: [["createdAt", "DESC"]],
+          limit: 1,
+        },
       ],
     });
 
@@ -93,6 +118,8 @@ export class ChatService {
       createdAt: chat.createdAt,
       otherUserName:
         chat.userId1 !== userId ? chat.user1.username : chat.user2.username,
+      lastMessage: chat.messages[0]?.text,
+      unreadCount: chat.messages.filter((message) => !message.checked).length,
     }));
   }
 
@@ -107,8 +134,21 @@ export class ChatService {
     });
   }
 
-  async getMessages(chatId: string): Promise<Message[]> {
-    return this.messageModel.findAll({ where: { chatId } });
+  async markMessagesAsRead(chatId: string, userId: string): Promise<void> {
+    await this.messageModel.update(
+      { checked: true },
+      { where: { chatId, checked: false } }
+    );
+  }
+
+  async getUnreadMessagesCount(
+    chatId: string,
+    userId: string
+  ): Promise<number> {
+    const count = await this.messageModel.count({
+      where: { chatId, userId: { [Op.ne]: userId }, checked: false },
+    });
+    return count;
   }
 
   async sendMessage(data: {
@@ -117,5 +157,29 @@ export class ChatService {
     text: string;
   }): Promise<Message> {
     return this.messageModel.create(data);
+  }
+
+  async getOtherUserId(chatId: string, userId: string): Promise<string> {
+    const chat = await this.chatModel.findOne({
+      where: { id: chatId },
+      include: [
+        {
+          model: User,
+          as: "user1",
+          attributes: ["id"],
+        },
+        {
+          model: User,
+          as: "user2",
+          attributes: ["id"],
+        },
+      ],
+    });
+
+    if (!chat) {
+      throw new NotFoundException("Chat not found");
+    }
+
+    return chat.userId1 !== userId ? chat.userId1 : chat.userId2;
   }
 }

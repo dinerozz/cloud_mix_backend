@@ -27,8 +27,30 @@ export class ChatGateway implements OnGatewayConnection {
   ) {
     client.join(data.chatId);
     console.log(`Client ${client.id} joined chat ${data.chatId}`);
+  }
+
+  @SubscribeMessage("getChatHistory")
+  async handleGetChatHistory(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { chatId: string; userId: string }
+  ) {
+    await this.chatService.markMessagesAsRead(data.chatId, data.userId);
+
     const chatHistory = await this.chatService.getChatHistory(data.chatId);
     client.emit("chatHistory", chatHistory);
+  }
+
+  @SubscribeMessage("markAsRead")
+  async handleMarkAsRead(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { chatId: string; userId: string }
+  ) {
+    await this.chatService.markMessagesAsRead(data.chatId, data.userId);
+    const unreadCount = await this.chatService.getUnreadMessagesCount(
+      data.chatId,
+      data.userId
+    );
+    client.emit("unreadCount", { chatId: data.chatId, unreadCount });
   }
 
   @SubscribeMessage("sendMessage")
@@ -38,5 +60,18 @@ export class ChatGateway implements OnGatewayConnection {
   ) {
     const message = await this.chatService.sendMessage(data);
     this.server.to(data.chatId).emit("newMessage", message);
+
+    const otherUserId = await this.chatService.getOtherUserId(
+      data.chatId,
+      data.userId
+    );
+
+    const dialogListUser1 = await this.chatService.getUserChats(data.userId);
+    const dialogListUser2 = await this.chatService.getUserChats(otherUserId);
+
+    this.server.to(data.chatId).emit("updateDialogList", dialogListUser1);
+    this.server.to(data.chatId).emit("updateDialogList", dialogListUser2);
+
+    await this.chatService.markMessagesAsRead(data.chatId, data.userId);
   }
 }
