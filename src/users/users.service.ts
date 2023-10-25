@@ -18,12 +18,18 @@ export class UsersService {
     return user;
   }
 
-  async findUsersByName(username: string): Promise<User[]> {
+  async findUsersByName(
+    username: string,
+    currentUserId: string
+  ): Promise<User[]> {
     return await this.userRepository.findAll({
       attributes: ["id", "username"],
       where: {
         username: {
           [Op.like]: `%${username}%`,
+        },
+        id: {
+          [Op.ne]: currentUserId,
         },
       },
     });

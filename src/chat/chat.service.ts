@@ -130,7 +130,7 @@ export class ChatService {
   async getChatHistory(chatId: string): Promise<Message[]> {
     return this.messageModel.findAll({
       where: { chatId },
-      order: [["createdAt", "ASC"]], // Это упорядочит сообщения по времени создания в возрастающем порядке
+      order: [["createdAt", "ASC"]],
     });
   }
 

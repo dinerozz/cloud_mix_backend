@@ -30,8 +30,8 @@ export class UsersController {
 
   @UseGuards(JwtAuthGuard)
   @Get("search/:username")
-  async findUsersByName(@Param("username") username: string) {
-    return this.userService.findUsersByName(username);
+  async findUsersByName(@Param("username") username: string, @Req() req) {
+    return this.userService.findUsersByName(username, req.user.id);
   }
 
   @ApiOperation({ summary: "Get user by id" })

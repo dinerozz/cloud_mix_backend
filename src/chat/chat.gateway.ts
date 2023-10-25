@@ -15,6 +15,7 @@ export class ChatGateway implements OnGatewayConnection {
   server: Server;
 
   constructor(private readonly chatService: ChatService) {}
+  private userSocketMap = new Map<string, string>();
 
   async handleConnection(client: Socket, ...args: any[]) {
     console.log(`Client connected: ${client.id}`);
@@ -23,8 +24,9 @@ export class ChatGateway implements OnGatewayConnection {
   @SubscribeMessage("joinChat")
   async handleJoinChat(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: { chatId: string }
+    @MessageBody() data: { chatId: string; userId: string }
   ) {
+    this.userSocketMap.set(data.userId, client.id);
     client.join(data.chatId);
     console.log(`Client ${client.id} joined chat ${data.chatId}`);
   }
@@ -68,9 +70,21 @@ export class ChatGateway implements OnGatewayConnection {
 
     const dialogListUser1 = await this.chatService.getUserChats(data.userId);
     const dialogListUser2 = await this.chatService.getUserChats(otherUserId);
+    console.log(data.userId, "userID");
+    const socketIdUser1 = this.userSocketMap.get(data.userId);
+    const socketIdUser2 = this.userSocketMap.get(otherUserId);
+    console.log(data.userId, otherUserId, "ids");
 
-    this.server.to(data.chatId).emit("updateDialogList", dialogListUser1);
-    this.server.to(data.chatId).emit("updateDialogList", dialogListUser2);
+    console.log("Socket ID for user1:", socketIdUser1);
+    console.log("Socket ID for user2:", socketIdUser2);
+
+    if (socketIdUser1) {
+      this.server.to(socketIdUser1).emit("updateDialogList", dialogListUser1);
+    }
+
+    if (socketIdUser2) {
+      this.server.to(socketIdUser2).emit("updateDialogList", dialogListUser2);
+    }
 
     await this.chatService.markMessagesAsRead(data.chatId, data.userId);
   }

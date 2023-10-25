@@ -29,7 +29,7 @@ export class AuthService {
     const tokens = await this.generateTokens(user);
     response.cookie("jwt", tokens.accessToken, {
       httpOnly: true,
-      domain: "localhost",
+      domain: process.env.DOMAIN || "localhost",
     });
     return tokens;
   }
@@ -59,7 +59,7 @@ export class AuthService {
     const tokens = await this.generateTokens(user);
     response.cookie("jwt", tokens.accessToken, {
       httpOnly: true,
-      domain: "localhost",
+      domain: process.env.DOMAIN || "localhost",
     });
     return tokens;
   }
@@ -93,7 +93,7 @@ export class AuthService {
 
     res.cookie("jwt", newTokens.accessToken, {
       httpOnly: true,
-      domain: "localhost",
+      domain: process.env.DOMAIN || "localhost",
     });
 
     return newTokens;
