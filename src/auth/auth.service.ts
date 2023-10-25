@@ -31,6 +31,7 @@ export class AuthService {
       httpOnly: true,
       domain: process.env.DOMAIN || "localhost",
       sameSite: "none",
+      secure: true,
     });
     return tokens;
   }
@@ -62,6 +63,7 @@ export class AuthService {
       httpOnly: true,
       domain: process.env.DOMAIN || "localhost",
       sameSite: "none",
+      secure: true,
     });
     return tokens;
   }
@@ -97,6 +99,7 @@ export class AuthService {
       httpOnly: true,
       domain: process.env.DOMAIN || "localhost",
       sameSite: "none",
+      secure: true,
     });
 
     return newTokens;
