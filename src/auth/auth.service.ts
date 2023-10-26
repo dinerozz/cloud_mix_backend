@@ -30,8 +30,6 @@ export class AuthService {
     response.cookie("jwt", tokens.accessToken, {
       httpOnly: true,
       domain: process.env.DOMAIN || "localhost",
-      sameSite: "none",
-      secure: true,
     });
     return tokens;
   }
@@ -62,8 +60,6 @@ export class AuthService {
     response.cookie("jwt", tokens.accessToken, {
       httpOnly: true,
       domain: process.env.DOMAIN || "localhost",
-      sameSite: "none",
-      secure: true,
     });
     return tokens;
   }
@@ -98,8 +94,6 @@ export class AuthService {
     res.cookie("jwt", newTokens.accessToken, {
       httpOnly: true,
       domain: process.env.DOMAIN || "localhost",
-      sameSite: "none",
-      secure: true,
     });
 
     return newTokens;
